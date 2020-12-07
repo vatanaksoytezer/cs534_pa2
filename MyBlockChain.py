@@ -1,3 +1,6 @@
+import Pyro4
+
+@Pyro4.expose
 class MyBlock(object):
     def __init__(self, data):
         # No access to data
@@ -7,6 +10,7 @@ class MyBlock(object):
     def getData(self):
         return self.__data
 
+@Pyro4.expose
 class MyBlockChain(object):
     def __init__(self, chainName):
         self.chainName = chainName
@@ -19,7 +23,7 @@ class MyBlockChain(object):
         # return account number
         accountNo = self.__getMaxAccountNumber() + 1
         data = ("CREATEACCOUNT",(accountNo, amount))
-        self.__appendToEnd(data)
+        self.appendToEnd(data)
         return accountNo
 
     def calculateBalance(self, account_no):
@@ -63,9 +67,11 @@ class MyBlockChain(object):
             return -1
 
         data = ("TRANSFER", (from_, to_, amount))
-        self.__appendToEnd(data)
+        self.appendToEnd(data)
         return 1
         
+    def getChainName(self):
+        return self.chainName
 
     def exchange(self, from_, to_, toChain, amount):
         # Exchange rate is 1
@@ -90,11 +96,11 @@ class MyBlockChain(object):
                 return -1
 
         # Append data to current chain
-        data = ("EXCHANGE", (from_, to_, toChain.chainName, amount))
-        self.__appendToEnd(data)
+        data = ("EXCHANGE", (from_, to_, toChain.getChainName(), amount))
+        self.appendToEnd(data)
         # Append data to other chain
-        other_data = ("EXCHANGE", (to_, from_, self.chainName, -amount))
-        toChain.__appendToEnd(other_data)
+        other_data = ("EXCHANGE", (to_, from_, self.getChainName(), -amount))
+        toChain.appendToEnd(other_data)
         return 1        
 
     def printChain(self):
@@ -120,7 +126,7 @@ class MyBlockChain(object):
 
 
     # Appends to the end of blockchain
-    def __appendToEnd(self, new_data): 
+    def appendToEnd(self, new_data): 
         new_block = MyBlock(new_data) 
         
         if self.head is None: 
